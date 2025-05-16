@@ -9,45 +9,67 @@ import { useAuth } from '../../context/AuthContext';
 import { toast } from '@/components/ui/sonner';
 import { Navigate, Link } from 'react-router-dom';
 import { UserRole } from '../../types';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+const registerSchema = z.object({
+  name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
+  role: z.enum(['student', 'academic', 'nonacademic'] as const),
+  identifier: z.string().min(2, { message: 'Required' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+  confirmPassword: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const Register = () => {
-  const [name, setName] = useState('');
-  const [identifier, setIdentifier] = useState('');
-  const [role, setRole] = useState<UserRole>('student');
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { register, isAuthenticated } = useAuth();
 
+  const form = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: '',
+      role: 'student',
+      identifier: '',
+      password: '',
+      confirmPassword: '',
+    },
+  });
+
+  const role = form.watch('role');
+
   const handleNext = () => {
-    if (!name.trim()) {
-      toast.error('Please enter your full name');
-      return;
+    form.trigger(['name', 'role']);
+    const nameError = form.formState.errors.name;
+    const roleError = form.formState.errors.role;
+    
+    if (!nameError && !roleError) {
+      setCurrentStep(2);
     }
-    setCurrentStep(2);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!identifier.trim()) {
-      toast.error(`Please enter your ${role === 'student' ? 'university ID' : 'university email'}`);
-      return;
-    }
-
-    // Staff should use email
-    if (role !== 'student' && !identifier.includes('@')) {
-      toast.error('Please enter a valid university email address');
-      return;
-    }
-
+  const handleSubmit = async (values: RegisterFormValues) => {
     setIsSubmitting(true);
 
     try {
-      await register(name, identifier, role);
+      await register(
+        values.name, 
+        values.identifier, 
+        values.role as UserRole, 
+        values.password
+      );
       toast.success('Registration successful');
     } catch (error) {
-      toast.error('Registration failed. Please try again.');
+      // Error handling is done in the register function
+      console.error('Registration error:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -70,74 +92,145 @@ const Register = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {currentStep === 1 ? (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  placeholder="Enter your full name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+              {currentStep === 1 ? (
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter your full name"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <div className="space-y-2">
-                <Label>I am a:</Label>
-                <RadioGroup value={role} onValueChange={(value) => setRole(value as UserRole)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="student" id="student" />
-                    <Label htmlFor="student" className="cursor-pointer">Student</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="academic" id="academic" />
-                    <Label htmlFor="academic" className="cursor-pointer">Academic Staff</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="nonacademic" id="nonacademic" />
-                    <Label htmlFor="nonacademic" className="cursor-pointer">Non-Academic Staff</Label>
-                  </div>
-                </RadioGroup>
-              </div>
+                  <FormField
+                    control={form.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>I am a:</FormLabel>
+                        <FormControl>
+                          <RadioGroup 
+                            onValueChange={field.onChange} 
+                            defaultValue={field.value}
+                            className="space-y-2"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="student" id="student" />
+                              <Label htmlFor="student" className="cursor-pointer">Student</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="academic" id="academic" />
+                              <Label htmlFor="academic" className="cursor-pointer">Academic Staff</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="nonacademic" id="nonacademic" />
+                              <Label htmlFor="nonacademic" className="cursor-pointer">Non-Academic Staff</Label>
+                            </div>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <Button className="w-full mt-6" onClick={handleNext}>
-                Next
-              </Button>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="identifier">
-                  {role === 'student' ? 'University ID' : 'University Email'}
-                </Label>
-                <Input
-                  id="identifier"
-                  placeholder={role === 'student' ? 'e.g., ST12345' : 'name@university.edu'}
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  type={role === 'student' ? 'text' : 'email'}
-                />
-              </div>
+                  <Button 
+                    className="w-full mt-6" 
+                    onClick={handleNext} 
+                    type="button"
+                  >
+                    Next
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="identifier"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {role === 'student' ? 'University ID' : 'University Email'}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder={role === 'student' ? 'e.g., ST12345' : 'name@university.edu'}
+                            type={role === 'student' ? 'text' : 'email'}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <div className="flex gap-2 mt-6">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setCurrentStep(1)}
-                  className="flex-1"
-                >
-                  Back
-                </Button>
-                <Button 
-                  type="submit" 
-                  className="flex-1" 
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Registering...' : 'Complete Registration'}
-                </Button>
-              </div>
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Create a password"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm Password</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Confirm your password"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex gap-2 mt-6">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setCurrentStep(1)}
+                      className="flex-1"
+                    >
+                      Back
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      className="flex-1" 
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Registering...' : 'Complete Registration'}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </form>
-          )}
+          </Form>
         </CardContent>
         <CardFooter className="flex flex-col">
           <p className="text-sm text-center text-gray-600">

@@ -7,26 +7,39 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from '@/components/ui/sonner';
 import { Navigate, Link } from 'react-router-dom';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+const loginSchema = z.object({
+  identifier: z.string().min(1, { message: 'Required' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
-  const [identifier, setIdentifier] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, isAuthenticated } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!identifier.trim()) {
-      toast.error('Please enter your university ID or email');
-      return;
-    }
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      identifier: '',
+      password: '',
+    },
+  });
 
+  const handleSubmit = async (values: LoginFormValues) => {
     setIsSubmitting(true);
 
     try {
-      await login(identifier);
+      await login(values.identifier, values.password);
       toast.success('Login successful');
     } catch (error) {
-      toast.error('Invalid credentials. Please try again.');
+      // Error is already handled in the login function
+      console.error('Login error:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -49,28 +62,52 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="identifier">University ID or Email</Label>
-              <Input
-                id="identifier"
-                placeholder="e.g., ST12345 or name@university.edu"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                required
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="identifier"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>University ID or Email</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., ST12345 or name@university.edu" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <p className="text-xs text-gray-500">
-                For demo: Try EJ2023 (student) or ibukun@university.edu (academic)
-              </p>
-            </div>
-            <Button 
-              type="submit" 
-              className="w-full mt-6" 
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Signing in...' : 'Sign In'}
-            </Button>
-          </form>
+              
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password" 
+                        placeholder="Enter your password" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <Button 
+                type="submit" 
+                className="w-full mt-6" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </form>
+          </Form>
         </CardContent>
         <CardFooter className="flex flex-col">
           <p className="text-sm text-center text-gray-600">
