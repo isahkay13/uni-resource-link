@@ -12,6 +12,8 @@ import Dashboard from "./pages/Dashboard";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import NotFound from "./pages/NotFound";
+import Channels from "./pages/Channels";
+import ChannelDetail from "./pages/ChannelDetail";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +32,8 @@ const App = () => (
                 <Route path="/register" element={<Register />} />
                 {/* Protected routes */}
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/channels" element={<ProtectedRoute><Channels /></ProtectedRoute>} />
+                <Route path="/channels/:channelId" element={<ProtectedRoute><ChannelDetail /></ProtectedRoute>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
