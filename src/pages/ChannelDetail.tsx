@@ -11,21 +11,9 @@ import { Channel, Message } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 import { Send } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
+import ChannelMembersList from '../components/ChannelMembersList';
 
 interface MessageWithUser extends Message {
-  profiles: {
-    name: string;
-    avatar_url: string | null;
-    role: string;
-  };
-}
-
-interface MessageData {
-  id: string;
-  content: string;
-  created_at: string;
-  user_id: string;
-  is_pinned: boolean;
   profiles?: {
     name: string;
     avatar_url: string | null;
@@ -78,35 +66,61 @@ const ChannelDetail = () => {
       try {
         if (!channelId) return;
         
-        const { data, error } = await supabase
+        // First fetch the messages
+        const { data: messagesData, error: messagesError } = await supabase
           .from('messages')
           .select(`
             id, 
             content, 
             created_at, 
             is_pinned,
-            user_id,
-            profiles:user_id (name, avatar_url, role)
+            user_id
           `)
           .eq('channel_id', channelId)
           .order('created_at', { ascending: true });
           
-        if (error) throw error;
+        if (messagesError) throw messagesError;
         
-        if (data) {
-          // Convert to our Message type
-          const formattedMessages: MessageWithUser[] = data.map((item: MessageData) => ({
-            id: item.id,
-            content: item.content,
-            senderId: item.user_id,
-            timestamp: new Date(item.created_at),
-            read: true,
-            profiles: item.profiles || {
-              name: 'Unknown User',
-              avatar_url: null,
-              role: 'student'
-            }
-          }));
+        if (messagesData && messagesData.length > 0) {
+          // Get all user IDs from messages
+          const userIds = [...new Set(messagesData.map(msg => msg.user_id))];
+          
+          // Fetch profiles for all users
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, name, avatar_url, role')
+            .in('id', userIds);
+            
+          if (profilesError) throw profilesError;
+          
+          // Create a map of user IDs to profiles
+          const profilesMap = new Map();
+          if (profilesData) {
+            profilesData.forEach(profile => {
+              profilesMap.set(profile.id, profile);
+            });
+          }
+          
+          // Combine messages with user profiles
+          const formattedMessages: MessageWithUser[] = messagesData.map(item => {
+            const profile = profilesMap.get(item.user_id);
+            return {
+              id: item.id,
+              content: item.content,
+              senderId: item.user_id,
+              timestamp: new Date(item.created_at),
+              read: true,
+              profiles: profile ? {
+                name: profile.name,
+                avatar_url: profile.avatar_url,
+                role: profile.role
+              } : {
+                name: 'Unknown User',
+                avatar_url: null,
+                role: 'student'
+              }
+            };
+          });
           
           setMessages(formattedMessages);
           scrollToBottom();
@@ -220,71 +234,78 @@ const ChannelDetail = () => {
   }
   
   return (
-    <div className="container mx-auto p-4 pt-20 max-w-4xl pb-20 md:pb-4">
-      <Card className="border-0 shadow-md">
-        <CardHeader className="bg-gray-50 border-b">
-          <CardTitle className="text-xl">{channel.name}</CardTitle>
-          <p className="text-sm text-gray-500">{channel.description}</p>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="flex flex-col h-[60vh]">
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.length === 0 ? (
-                <div className="flex justify-center items-center h-full">
-                  <p className="text-gray-400">No messages yet. Be the first to send a message!</p>
-                </div>
-              ) : (
-                messages.map((message) => (
-                  <div 
-                    key={message.id} 
-                    className={`flex items-start gap-2 ${
-                      message.senderId === user?.id ? 'flex-row-reverse' : ''
-                    }`}
-                  >
-                    <UserAvatar 
-                      user={{
-                        id: message.senderId,
-                        name: message.profiles?.name || 'Unknown',
-                        role: message.profiles?.role as any,
-                        avatar: message.profiles?.avatar_url || undefined
-                      }}
-                      size="sm"
-                    />
-                    <div 
-                      className={`
-                        rounded-lg p-3 max-w-[80%]
-                        ${message.senderId === user?.id 
-                          ? 'bg-university-primary text-white' 
-                          : 'bg-gray-100'}
-                      `}
-                    >
-                      <div className={`text-xs mb-1 ${message.senderId === user?.id ? 'text-gray-100' : 'text-gray-500'}`}>
-                        {message.profiles?.name || 'Unknown'} • {formatDistanceToNow(message.timestamp, { addSuffix: true })}
-                      </div>
-                      <p>{message.content}</p>
+    <div className="container mx-auto p-4 pt-20 max-w-6xl pb-20 md:pb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2">
+          <Card className="border-0 shadow-md">
+            <CardHeader className="bg-gray-50 border-b">
+              <CardTitle className="text-xl">{channel.name}</CardTitle>
+              <p className="text-sm text-gray-500">{channel.description}</p>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="flex flex-col h-[60vh]">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {messages.length === 0 ? (
+                    <div className="flex justify-center items-center h-full">
+                      <p className="text-gray-400">No messages yet. Be the first to send a message!</p>
                     </div>
-                  </div>
-                ))
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-            <div className="p-4 border-t">
-              <form onSubmit={sendMessage} className="flex gap-2">
-                <Textarea 
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type your message..."
-                  className="min-h-[50px] resize-none"
-                  disabled={isSending}
-                />
-                <Button type="submit" size="icon" disabled={isSending || !newMessage.trim()}>
-                  <Send className="h-5 w-5" />
-                </Button>
-              </form>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+                  ) : (
+                    messages.map((message) => (
+                      <div 
+                        key={message.id} 
+                        className={`flex items-start gap-2 ${
+                          message.senderId === user?.id ? 'flex-row-reverse' : ''
+                        }`}
+                      >
+                        <UserAvatar 
+                          user={{
+                            id: message.senderId,
+                            name: message.profiles?.name || 'Unknown',
+                            role: (message.profiles?.role || 'student') as any,
+                            avatar: message.profiles?.avatar_url || undefined
+                          }}
+                          size="sm"
+                        />
+                        <div 
+                          className={`
+                            rounded-lg p-3 max-w-[80%]
+                            ${message.senderId === user?.id 
+                              ? 'bg-university-primary text-white' 
+                              : 'bg-gray-100'}
+                          `}
+                        >
+                          <div className={`text-xs mb-1 ${message.senderId === user?.id ? 'text-gray-100' : 'text-gray-500'}`}>
+                            {message.profiles?.name || 'Unknown'} • {formatDistanceToNow(message.timestamp, { addSuffix: true })}
+                          </div>
+                          <p>{message.content}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+                <div className="p-4 border-t">
+                  <form onSubmit={sendMessage} className="flex gap-2">
+                    <Textarea 
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Type your message..."
+                      className="min-h-[50px] resize-none"
+                      disabled={isSending}
+                    />
+                    <Button type="submit" size="icon" disabled={isSending || !newMessage.trim()}>
+                      <Send className="h-5 w-5" />
+                    </Button>
+                  </form>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <div>
+          {channelId && <ChannelMembersList channelId={channelId} />}
+        </div>
+      </div>
     </div>
   );
 };

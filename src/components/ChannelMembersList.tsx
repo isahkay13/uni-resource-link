@@ -4,13 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import UserAvatar from './UserAvatar';
 
-interface ProfileData {
-  id: string;
-  name: string;
-  role: string;
-  avatar_url: string | null;
-}
-
 interface ChannelMember {
   id: string;
   name: string;
@@ -55,15 +48,7 @@ const ChannelMembersList: React.FC<ChannelMembersListProps> = ({ channelId }) =>
         if (profilesError) throw profilesError;
 
         if (profilesData) {
-          // Map the profiles data to our ChannelMember format
-          const membersList = profilesData.map(profile => ({
-            id: profile.id,
-            name: profile.name,
-            role: profile.role,
-            avatar_url: profile.avatar_url
-          }));
-          
-          setMembers(membersList);
+          setMembers(profilesData);
         }
       } catch (error) {
         console.error('Error fetching channel members:', error);
@@ -74,6 +59,27 @@ const ChannelMembersList: React.FC<ChannelMembersListProps> = ({ channelId }) =>
 
     if (channelId) {
       fetchMembers();
+      
+      // Set up real-time listener for member changes
+      const channel = supabase
+        .channel('members-changes')
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'channel_members',
+            filter: `channel_id=eq.${channelId}`
+          },
+          () => {
+            // Refetch the members when changes occur
+            fetchMembers();
+          }
+        )
+        .subscribe();
+        
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [channelId]);
 
