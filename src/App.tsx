@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,35 +16,40 @@ import NotFound from "./pages/NotFound";
 import Channels from "./pages/Channels";
 import ChannelDetail from "./pages/ChannelDetail";
 
+// Create queryClient outside of the component to avoid recreation on each render
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <AuthProvider>
-        <AppProvider>
-          <BrowserRouter>
-            <Layout>
-              <Routes>
-                <Route path="/" element={<IndexRouter />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                {/* Protected routes */}
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/channels" element={<ProtectedRoute><Channels /></ProtectedRoute>} />
-                <Route path="/channels/:channelId" element={<ProtectedRoute><ChannelDetail /></ProtectedRoute>} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Layout>
-          </BrowserRouter>
-        </AppProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  return (
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AuthProvider>
+            <AppProvider>
+              <BrowserRouter>
+                <Layout>
+                  <Routes>
+                    <Route path="/" element={<IndexRouter />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    {/* Protected routes */}
+                    <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                    <Route path="/channels" element={<ProtectedRoute><Channels /></ProtectedRoute>} />
+                    <Route path="/channels/:channelId" element={<ProtectedRoute><ChannelDetail /></ProtectedRoute>} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Layout>
+              </BrowserRouter>
+            </AppProvider>
+          </AuthProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
+};
 
 // Index route handler to show different content based on auth state
 const IndexRouter = () => {

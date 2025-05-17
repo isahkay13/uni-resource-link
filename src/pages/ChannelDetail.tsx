@@ -20,6 +20,19 @@ interface MessageWithUser extends Message {
   };
 }
 
+interface MessageData {
+  id: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+  is_pinned: boolean;
+  profiles?: {
+    name: string;
+    avatar_url: string | null;
+    role: string;
+  };
+}
+
 const ChannelDetail = () => {
   const { channelId } = useParams<{ channelId: string }>();
   const { user } = useAuth();
@@ -80,18 +93,24 @@ const ChannelDetail = () => {
           
         if (error) throw error;
         
-        // Convert to our Message type
-        const formattedMessages: MessageWithUser[] = data.map(item => ({
-          id: item.id,
-          content: item.content,
-          senderId: item.user_id,
-          timestamp: new Date(item.created_at),
-          read: true,
-          profiles: item.profiles
-        }));
-        
-        setMessages(formattedMessages);
-        scrollToBottom();
+        if (data) {
+          // Convert to our Message type
+          const formattedMessages: MessageWithUser[] = data.map((item: MessageData) => ({
+            id: item.id,
+            content: item.content,
+            senderId: item.user_id,
+            timestamp: new Date(item.created_at),
+            read: true,
+            profiles: item.profiles || {
+              name: 'Unknown User',
+              avatar_url: null,
+              role: 'student'
+            }
+          }));
+          
+          setMessages(formattedMessages);
+          scrollToBottom();
+        }
       } catch (error) {
         console.error('Error fetching messages:', error);
       }
@@ -223,9 +242,12 @@ const ChannelDetail = () => {
                     }`}
                   >
                     <UserAvatar 
-                      name={message.profiles?.name || 'Unknown'} 
-                      avatarUrl={message.profiles?.avatar_url || undefined}
-                      role={message.profiles?.role as any}
+                      user={{
+                        id: message.senderId,
+                        name: message.profiles?.name || 'Unknown',
+                        role: message.profiles?.role as any,
+                        avatar: message.profiles?.avatar_url || undefined
+                      }}
                       size="sm"
                     />
                     <div 

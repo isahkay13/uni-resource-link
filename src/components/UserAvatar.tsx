@@ -1,10 +1,15 @@
 
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User } from '../types';
+import { User, UserRole } from '../types';
 
 interface UserAvatarProps {
-  user: User;
+  user: {
+    id: string;
+    name: string;
+    role: UserRole;
+    avatar?: string;
+  };
   size?: 'sm' | 'md' | 'lg';
   showStatus?: boolean;
 }
