@@ -1,17 +1,15 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import UserAvatar from '../components/UserAvatar';
 import { Channel, Message } from '../types';
-import { formatDistanceToNow } from 'date-fns';
-import { Send } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import ChannelMembersList from '../components/ChannelMembersList';
+import MessageList from '../components/chat/MessageList';
+import MessageInput from '../components/chat/MessageInput';
+import ChannelHeader from '../components/chat/ChannelHeader';
 
 interface MessageWithUser extends Message {
   profiles?: {
@@ -26,10 +24,7 @@ const ChannelDetail = () => {
   const { user } = useAuth();
   const [channel, setChannel] = useState<Channel | null>(null);
   const [messages, setMessages] = useState<MessageWithUser[]>([]);
-  const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isSending, setIsSending] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchChannel = async () => {
@@ -123,7 +118,6 @@ const ChannelDetail = () => {
           });
           
           setMessages(formattedMessages);
-          scrollToBottom();
         }
       } catch (error) {
         console.error('Error fetching messages:', error);
@@ -168,7 +162,6 @@ const ChannelDetail = () => {
             };
             
             setMessages(prev => [...prev, newMsg]);
-            scrollToBottom();
           }
         )
         .subscribe();
@@ -180,38 +173,6 @@ const ChannelDetail = () => {
       }
     };
   }, [channelId]);
-  
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
-  
-  const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !channelId || !user) return;
-    
-    setIsSending(true);
-    
-    try {
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          channel_id: channelId,
-          user_id: user.id,
-          content: newMessage.trim()
-        });
-      
-      if (error) throw error;
-      
-      setNewMessage('');
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error('Failed to send message');
-    } finally {
-      setIsSending(false);
-    }
-  };
   
   if (isLoading) {
     return (
@@ -239,64 +200,17 @@ const ChannelDetail = () => {
         <div className="md:col-span-2">
           <Card className="border-0 shadow-md">
             <CardHeader className="bg-gray-50 border-b">
-              <CardTitle className="text-xl">{channel.name}</CardTitle>
-              <p className="text-sm text-gray-500">{channel.description}</p>
+              <ChannelHeader name={channel.name} description={channel.description} />
             </CardHeader>
             <CardContent className="p-0">
               <div className="flex flex-col h-[60vh]">
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {messages.length === 0 ? (
-                    <div className="flex justify-center items-center h-full">
-                      <p className="text-gray-400">No messages yet. Be the first to send a message!</p>
-                    </div>
-                  ) : (
-                    messages.map((message) => (
-                      <div 
-                        key={message.id} 
-                        className={`flex items-start gap-2 ${
-                          message.senderId === user?.id ? 'flex-row-reverse' : ''
-                        }`}
-                      >
-                        <UserAvatar 
-                          user={{
-                            id: message.senderId,
-                            name: message.profiles?.name || 'Unknown',
-                            role: (message.profiles?.role || 'student') as any,
-                            avatar: message.profiles?.avatar_url || undefined
-                          }}
-                          size="sm"
-                        />
-                        <div 
-                          className={`
-                            rounded-lg p-3 max-w-[80%]
-                            ${message.senderId === user?.id 
-                              ? 'bg-university-primary text-white' 
-                              : 'bg-gray-100'}
-                          `}
-                        >
-                          <div className={`text-xs mb-1 ${message.senderId === user?.id ? 'text-gray-100' : 'text-gray-500'}`}>
-                            {message.profiles?.name || 'Unknown'} • {formatDistanceToNow(message.timestamp, { addSuffix: true })}
-                          </div>
-                          <p>{message.content}</p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                  <div ref={messagesEndRef} />
+                  <MessageList messages={messages} />
                 </div>
                 <div className="p-4 border-t">
-                  <form onSubmit={sendMessage} className="flex gap-2">
-                    <Textarea 
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type your message..."
-                      className="min-h-[50px] resize-none"
-                      disabled={isSending}
-                    />
-                    <Button type="submit" size="icon" disabled={isSending || !newMessage.trim()}>
-                      <Send className="h-5 w-5" />
-                    </Button>
-                  </form>
+                  {user && channelId && (
+                    <MessageInput channelId={channelId} userId={user.id} />
+                  )}
                 </div>
               </div>
             </CardContent>
