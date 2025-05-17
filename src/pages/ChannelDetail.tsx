@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -205,7 +204,7 @@ const ChannelDetail = () => {
             <CardContent className="p-0">
               <div className="flex flex-col h-[60vh]">
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  <MessageList messages={messages} />
+                  <MessageList messages={messages} channelId={channelId || ''} />
                 </div>
                 <div className="p-4 border-t">
                   {user && channelId && (

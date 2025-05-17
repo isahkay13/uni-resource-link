@@ -1,9 +1,11 @@
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import UserAvatar from '../UserAvatar';
 import { Message } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import TypingIndicator from './TypingIndicator';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MessageWithUser extends Message {
   profiles?: {
@@ -15,15 +17,68 @@ interface MessageWithUser extends Message {
 
 interface MessageListProps {
   messages: MessageWithUser[];
+  channelId: string;
 }
 
-const MessageList = ({ messages }: MessageListProps) => {
+interface TypingUser {
+  userId: string;
+  name: string;
+}
+
+const MessageList = ({ messages, channelId }: MessageListProps) => {
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, typingUsers]);
+
+  useEffect(() => {
+    // Set up real-time subscription for typing events
+    const channel = supabase.channel('typing')
+      .on('broadcast', { event: 'typing' }, async (payload) => {
+        if (
+          payload.payload.channel_id === channelId && 
+          payload.payload.user_id !== user?.id
+        ) {
+          // Fetch user name if not already in typing users
+          if (!typingUsers.some(u => u.userId === payload.payload.user_id)) {
+            try {
+              const { data, error } = await supabase
+                .from('profiles')
+                .select('name')
+                .eq('id', payload.payload.user_id)
+                .single();
+                
+              if (error) throw error;
+              
+              if (data) {
+                setTypingUsers(prev => [
+                  ...prev, 
+                  { userId: payload.payload.user_id, name: data.name }
+                ]);
+              }
+            } catch (error) {
+              console.error('Error fetching typing user:', error);
+            }
+          }
+        }
+      })
+      .on('broadcast', { event: 'typing_stopped' }, (payload) => {
+        if (payload.payload.channel_id === channelId) {
+          setTypingUsers(prev => 
+            prev.filter(user => user.userId !== payload.payload.user_id)
+          );
+        }
+      })
+      .subscribe();
+      
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [channelId, user?.id]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -70,6 +125,15 @@ const MessageList = ({ messages }: MessageListProps) => {
           </div>
         </div>
       ))}
+      
+      {typingUsers.length > 0 && (
+        <div className="pl-10 my-2">
+          {typingUsers.map(typingUser => (
+            <TypingIndicator key={typingUser.userId} name={typingUser.name} />
+          ))}
+        </div>
+      )}
+      
       <div ref={messagesEndRef} />
     </>
   );
