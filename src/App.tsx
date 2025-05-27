@@ -15,6 +15,7 @@ import Register from "./pages/auth/Register";
 import NotFound from "./pages/NotFound";
 import Channels from "./pages/Channels";
 import ChannelDetail from "./pages/ChannelDetail";
+import Assignments from "./pages/Assignments";
 
 // Create queryClient outside of the component to avoid recreation on each render
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => {
                     <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                     <Route path="/channels" element={<ProtectedRoute><Channels /></ProtectedRoute>} />
                     <Route path="/channels/:channelId" element={<ProtectedRoute><ChannelDetail /></ProtectedRoute>} />
+                    <Route path="/assignments" element={<ProtectedRoute><Assignments /></ProtectedRoute>} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>

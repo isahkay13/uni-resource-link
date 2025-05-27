@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, MessageSquare, Book, File } from 'lucide-react';
+import { Home, MessageSquare, Book, File, FileText } from 'lucide-react';
 
 const MobileNav: React.FC = () => {
   const location = useLocation();
@@ -28,6 +28,16 @@ const MobileNav: React.FC = () => {
         >
           <MessageSquare className="h-5 w-5" />
           <span className="text-xs mt-1">Channels</span>
+        </Link>
+        
+        <Link 
+          to="/assignments" 
+          className={`flex flex-col items-center justify-center w-full h-full ${
+            currentPath.includes('/assignments') ? 'text-university-primary' : 'text-gray-500'
+          }`}
+        >
+          <FileText className="h-5 w-5" />
+          <span className="text-xs mt-1">Assignments</span>
         </Link>
         
         <Link 

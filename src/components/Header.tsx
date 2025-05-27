@@ -27,6 +27,9 @@ const Header: React.FC = () => {
           <Link to="/chats" className="text-gray-700 hover:text-university-primary transition-colors">
             Messages
           </Link>
+          <Link to="/assignments" className="text-gray-700 hover:text-university-primary transition-colors">
+            Assignments
+          </Link>
           <Link to="/tutorials" className="text-gray-700 hover:text-university-primary transition-colors">
             Tutorials
           </Link>
