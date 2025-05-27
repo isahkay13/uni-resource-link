@@ -15,9 +15,9 @@ const Header: React.FC = () => {
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="flex items-center gap-2">
           <div className="w-10 h-10 rounded-full bg-university-primary flex items-center justify-center text-white font-bold text-xl">
-            U
+            S
           </div>
-          {!isMobile && <span className="text-xl font-bold text-university-primary">UniConnect</span>}
+          {!isMobile && <span className="text-xl font-bold text-university-primary">StudyConnect</span>}
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">

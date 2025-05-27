@@ -14,7 +14,7 @@ const Landing = () => {
           <div className="flex flex-col md:flex-row items-center">
             <div className="md:w-1/2 space-y-6">
               <h1 className="text-4xl md:text-6xl font-bold">
-                Welcome to UniConnect
+                Welcome to StudyConnect
               </h1>
               <p className="text-xl md:text-2xl text-blue-100">
                 Your university's secure platform for file sharing,
@@ -39,7 +39,7 @@ const Landing = () => {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-white text-center">
                       <div className="w-20 h-20 mx-auto mb-4 bg-white rounded-full flex items-center justify-center">
-                        <span className="text-4xl font-bold text-university-primary">U</span>
+                        <span className="text-4xl font-bold text-university-primary">S</span>
                       </div>
                       <p className="text-xl font-medium">University Platform</p>
                       <p className="opacity-75">App Screenshot</p>
@@ -102,7 +102,7 @@ const Landing = () => {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
           <p className="text-gray-600 max-w-2xl mx-auto mb-8">
-            Join thousands of students and staff who are already using UniConnect to enhance their university experience.
+            Join thousands of students and staff who are already using StudyConnect to enhance their university experience.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/register">
