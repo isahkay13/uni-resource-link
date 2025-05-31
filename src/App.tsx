@@ -17,6 +17,8 @@ import Channels from "./pages/Channels";
 import ChannelDetail from "./pages/ChannelDetail";
 import Assignments from "./pages/Assignments";
 import Tutorials from "./pages/Tutorials";
+import TutorialDetail from "./pages/TutorialDetail";
+import CreateTutorial from "./pages/CreateTutorial";
 import Files from "./pages/Files";
 
 // Create queryClient outside of the component to avoid recreation on each render
@@ -42,6 +44,8 @@ const App = () => {
                   <Route path="/channels/:channelId" element={<ProtectedRoute><ChannelDetail /></ProtectedRoute>} />
                   <Route path="/assignments" element={<ProtectedRoute><Assignments /></ProtectedRoute>} />
                   <Route path="/tutorials" element={<ProtectedRoute><Tutorials /></ProtectedRoute>} />
+                  <Route path="/tutorials/:tutorialId" element={<ProtectedRoute><TutorialDetail /></ProtectedRoute>} />
+                  <Route path="/tutorials/create" element={<ProtectedRoute><CreateTutorial /></ProtectedRoute>} />
                   <Route path="/files" element={<ProtectedRoute><Files /></ProtectedRoute>} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />

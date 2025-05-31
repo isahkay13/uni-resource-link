@@ -52,12 +52,14 @@ export interface Tutorial {
   title: string;
   content: string;
   authorId: string;
+  authorName: string;
   createdAt: Date;
   updatedAt: Date;
   attachments: FileAttachment[];
   tags: string[];
   upvotes: number;
   comments: Comment[];
+  channelId?: string | null;
 }
 
 export interface Comment {
