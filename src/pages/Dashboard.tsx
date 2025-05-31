@@ -10,14 +10,23 @@ import { MessageSquare, Book, File, Upload, Users, Calendar, TrendingUp, Bell, B
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { channels, chats, tutorials, files } = useApp();
+  const { channels, tutorials, files, assignments, loading } = useApp();
   
   if (!user) {
     return <Navigate to="/login" />;
   }
 
+  if (loading) {
+    return (
+      <div className="container mx-auto p-4 pt-20">
+        <div className="flex justify-center items-center h-64">
+          <p className="text-gray-500">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   const myChannels = channels.filter(channel => channel.members.includes(user.id));
-  const myChats = chats.filter(chat => chat.participants.includes(user.id));
   const recentTutorials = [...tutorials].sort((a, b) => 
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   ).slice(0, 3);
@@ -72,8 +81,10 @@ const Dashboard = () => {
                 <div className="text-sm text-gray-600">Course Files</div>
               </div>
               <div className="text-center p-4 bg-orange-50 rounded-lg">
-                <div className="text-2xl font-bold text-orange-600">{myChats.length}</div>
-                <div className="text-sm text-gray-600">Active Conversations</div>
+                <div className="text-2xl font-bold text-orange-600">{assignments.length}</div>
+                <div className="text-sm text-gray-600">
+                  {isStudent ? "Active Assignments" : "Created Assignments"}
+                </div>
               </div>
             </div>
           </CardContent>

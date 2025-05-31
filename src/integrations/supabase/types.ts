@@ -9,6 +9,97 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      assignment_submissions: {
+        Row: {
+          assignment_id: string
+          content: string | null
+          feedback: string | null
+          grade: string | null
+          id: string
+          status: string | null
+          student_id: string
+          submitted_at: string
+        }
+        Insert: {
+          assignment_id: string
+          content?: string | null
+          feedback?: string | null
+          grade?: string | null
+          id?: string
+          status?: string | null
+          student_id: string
+          submitted_at?: string
+        }
+        Update: {
+          assignment_id?: string
+          content?: string | null
+          feedback?: string | null
+          grade?: string | null
+          id?: string
+          status?: string | null
+          student_id?: string
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignment_submissions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assignments: {
+        Row: {
+          channel_id: string | null
+          course_name: string
+          created_at: string
+          description: string
+          due_date: string
+          id: string
+          instructor_id: string
+          submission_type: string
+          title: string
+          total_points: number | null
+          updated_at: string
+        }
+        Insert: {
+          channel_id?: string | null
+          course_name: string
+          created_at?: string
+          description: string
+          due_date: string
+          id?: string
+          instructor_id: string
+          submission_type?: string
+          title: string
+          total_points?: number | null
+          updated_at?: string
+        }
+        Update: {
+          channel_id?: string | null
+          course_name?: string
+          created_at?: string
+          description?: string
+          due_date?: string
+          id?: string
+          instructor_id?: string
+          submission_type?: string
+          title?: string
+          total_points?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignments_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channel_members: {
         Row: {
           channel_id: string
@@ -64,6 +155,90 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      direct_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          receiver_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
+      file_attachments: {
+        Row: {
+          assignment_id: string | null
+          channel_id: string | null
+          description: string | null
+          file_size: number
+          file_type: string
+          id: string
+          name: string
+          storage_path: string
+          tutorial_id: string | null
+          upload_date: string
+          uploader_id: string
+        }
+        Insert: {
+          assignment_id?: string | null
+          channel_id?: string | null
+          description?: string | null
+          file_size: number
+          file_type: string
+          id?: string
+          name: string
+          storage_path: string
+          tutorial_id?: string | null
+          upload_date?: string
+          uploader_id: string
+        }
+        Update: {
+          assignment_id?: string | null
+          channel_id?: string | null
+          description?: string | null
+          file_size?: number
+          file_type?: string
+          id?: string
+          name?: string
+          storage_path?: string
+          tutorial_id?: string | null
+          upload_date?: string
+          uploader_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_attachments_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "file_attachments_tutorial_id_fkey"
+            columns: ["tutorial_id"]
+            isOneToOne: false
+            referencedRelation: "tutorials"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messages: {
         Row: {
@@ -132,6 +307,114 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      tutorial_comments: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          tutorial_id: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          id?: string
+          tutorial_id: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          tutorial_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tutorial_comments_tutorial_id_fkey"
+            columns: ["tutorial_id"]
+            isOneToOne: false
+            referencedRelation: "tutorials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tutorial_upvotes: {
+        Row: {
+          created_at: string
+          id: string
+          tutorial_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tutorial_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tutorial_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tutorial_upvotes_tutorial_id_fkey"
+            columns: ["tutorial_id"]
+            isOneToOne: false
+            referencedRelation: "tutorials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tutorials: {
+        Row: {
+          author_id: string
+          channel_id: string | null
+          content: string
+          created_at: string
+          id: string
+          is_published: boolean | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          upvotes: number | null
+        }
+        Insert: {
+          author_id: string
+          channel_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_published?: boolean | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          upvotes?: number | null
+        }
+        Update: {
+          author_id?: string
+          channel_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_published?: boolean | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          upvotes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tutorials_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
