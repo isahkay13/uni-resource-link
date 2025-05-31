@@ -2,13 +2,26 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
-import { Channel, Chat, Tutorial, File } from '../types';
+import { Channel, Chat, Tutorial } from '../types';
+
+interface FileType {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  uploadDate: string;
+  uploaderId: string;
+  uploaderName: string;
+  path: string;
+  channelId: string | null;
+  description: string | null;
+}
 
 interface AppContextType {
   channels: Channel[];
   chats: Chat[];
   tutorials: Tutorial[];
-  files: File[];
+  files: FileType[];
   assignments: any[];
   loading: boolean;
   refreshData: () => void;
@@ -21,7 +34,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [channels, setChannels] = useState<Channel[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [tutorials, setTutorials] = useState<Tutorial[]>([]);
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<FileType[]>([]);
   const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -80,9 +93,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         authorId: tutorial.author_id,
         authorName: tutorial.profiles?.name || 'Unknown',
         createdAt: tutorial.created_at,
+        updatedAt: tutorial.updated_at || tutorial.created_at,
         upvotes: tutorial.upvotes || 0,
         tags: tutorial.tags || [],
-        channelId: tutorial.channel_id
+        channelId: tutorial.channel_id,
+        attachments: [],
+        comments: []
       }));
 
       setTutorials(formattedTutorials);
@@ -103,7 +119,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       if (error) throw error;
 
-      const formattedFiles: File[] = data.map(file => ({
+      const formattedFiles: FileType[] = data.map(file => ({
         id: file.id,
         name: file.name,
         size: file.file_size,
