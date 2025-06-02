@@ -29,15 +29,25 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   };
 
   const handleUpload = () => {
+    console.log('Upload button clicked');
     if (fileInputRef.current) {
+      console.log('Triggering file input click');
       fileInputRef.current.click();
+    } else {
+      console.error('File input ref is null');
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('File input changed');
     const file = e.target.files?.[0];
     
-    if (!file) return;
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
+    
+    console.log('File selected:', file.name, file.size);
     
     if (file.size > maxSize) {
       toast.error(`File too large. Maximum size is ${formatBytes(maxSize)}.`);
@@ -61,6 +71,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           uploadDate: new Date()
         };
 
+        console.log('Uploading file:', fileAttachment);
         uploadFile(fileAttachment);
         
         if (onFileUploaded) {
@@ -73,26 +84,46 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       }
       
       setUploading(false);
+      
+      // Reset the input value so the same file can be selected again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }, 1500);
   };
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center space-y-4">
       <input 
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
         className="hidden"
+        accept="*/*"
+        multiple={false}
       />
+      
+      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
+        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <div className="space-y-2">
+          <p className="text-lg font-medium">Choose a file to upload</p>
+          <p className="text-sm text-gray-500">
+            Click the button below to select a file from your device
+          </p>
+        </div>
+      </div>
+      
       <Button 
         onClick={handleUpload} 
         disabled={uploading}
         className="flex items-center gap-2"
+        size="lg"
       >
         <Upload className="h-4 w-4" />
-        {uploading ? 'Uploading...' : 'Upload File'}
+        {uploading ? 'Uploading...' : 'Select File from Device'}
       </Button>
-      <p className="text-xs text-gray-500 mt-2">
+      
+      <p className="text-xs text-gray-500">
         Maximum file size: {formatBytes(maxSize)}
       </p>
     </div>
