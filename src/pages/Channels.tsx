@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, BookOpen, School, Heart } from 'lucide-react';
+import { Users, BookOpen, School, Heart, Plus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Channel } from '../types';
@@ -14,6 +14,8 @@ const Channels = () => {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [userChannels, setUserChannels] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const isStaff = user?.role === 'academic' || user?.role === 'nonacademic';
 
   useEffect(() => {
     const fetchChannels = async () => {
@@ -119,7 +121,17 @@ const Channels = () => {
   return (
     <div className="container mx-auto p-4 pt-20 pb-20 md:pb-4">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">University Channels</h1>
+        <div className="flex justify-between items-center mb-2">
+          <h1 className="text-3xl font-bold">University Channels</h1>
+          {isStaff && (
+            <Link to="/channels/create">
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Create Channel
+              </Button>
+            </Link>
+          )}
+        </div>
         <p className="text-gray-600">
           Join channels to connect with fellow students and faculty
         </p>
