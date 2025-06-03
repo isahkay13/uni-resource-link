@@ -6,11 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Plus, X } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ArrowLeft, Plus, X, Upload } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
+import FileUploader from '../components/FileUploader';
 
 const CreateTutorial = () => {
   const navigate = useNavigate();
@@ -21,6 +23,8 @@ const CreateTutorial = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   const [loading, setLoading] = useState(false);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState<any[]>([]);
 
   const addTag = () => {
     if (newTag.trim() && !tags.includes(newTag.trim())) {
@@ -31,6 +35,17 @@ const CreateTutorial = () => {
 
   const removeTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleFileUploaded = (fileId: string) => {
+    setUploadDialogOpen(false);
+    toast.success('File attached to tutorial!');
+    // In a real implementation, you'd track the file IDs
+    setAttachedFiles([...attachedFiles, { id: fileId, name: `File ${fileId}` }]);
+  };
+
+  const removeAttachment = (fileId: string) => {
+    setAttachedFiles(attachedFiles.filter(file => file.id !== fileId));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -113,6 +128,48 @@ const CreateTutorial = () => {
                 className="min-h-[300px]"
                 required
               />
+            </div>
+
+            <div>
+              <Label>Attachments</Label>
+              <div className="space-y-2">
+                <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button type="button" variant="outline" className="w-full">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Add File Attachment
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Upload Attachment</DialogTitle>
+                      <DialogDescription>
+                        Choose a file to attach to this tutorial.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <FileUploader onFileUploaded={handleFileUploaded} />
+                  </DialogContent>
+                </Dialog>
+
+                {attachedFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-sm text-gray-600">Attached Files:</Label>
+                    {attachedFiles.map((file) => (
+                      <div key={file.id} className="flex items-center justify-between p-2 border rounded">
+                        <span className="text-sm">{file.name}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeAttachment(file.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>

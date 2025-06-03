@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   File, 
   Upload, 
@@ -21,12 +22,14 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
 import { formatDistanceToNow } from 'date-fns';
+import FileUploader from '../components/FileUploader';
 
 const Files = () => {
   const { user } = useAuth();
   const { files, loading } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [fileTypeFilter, setFileTypeFilter] = useState<string>('all');
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   const getFileIcon = (fileType: string) => {
     if (fileType.startsWith('image/')) return <Image className="h-5 w-5" />;
@@ -53,6 +56,10 @@ const Files = () => {
     if (fileType.includes('spreadsheet') || fileType.includes('excel')) return 'Spreadsheets';
     if (fileType.includes('presentation') || fileType.includes('powerpoint')) return 'Presentations';
     return 'Other';
+  };
+
+  const handleFileUploaded = () => {
+    setUploadDialogOpen(false);
   };
 
   // Filter files based on search and type
@@ -86,10 +93,23 @@ const Files = () => {
               Access and manage educational materials and resources
             </p>
           </div>
-          <Button className="flex items-center gap-2">
-            <Upload className="h-4 w-4" />
-            Upload Files
-          </Button>
+          <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                Upload Files
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Upload File</DialogTitle>
+                <DialogDescription>
+                  Choose a file to upload to the course resources.
+                </DialogDescription>
+              </DialogHeader>
+              <FileUploader onFileUploaded={handleFileUploaded} />
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Search and Filters */}
@@ -129,10 +149,23 @@ const Files = () => {
                 ? "Try adjusting your search criteria"
                 : "No files have been uploaded yet"}
             </p>
-            <Button>
-              <Upload className="h-4 w-4 mr-2" />
-              Upload your first file
-            </Button>
+            <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload your first file
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Upload File</DialogTitle>
+                  <DialogDescription>
+                    Choose a file to upload to the course resources.
+                  </DialogDescription>
+                </DialogHeader>
+                <FileUploader onFileUploaded={handleFileUploaded} />
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
       ) : (

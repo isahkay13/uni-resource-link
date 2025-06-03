@@ -3,9 +3,14 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Calendar, Clock, FileText, User, BookOpen, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatDistanceToNow } from 'date-fns';
+import AssignmentFileUploader from '../components/AssignmentFileUploader';
+import { toast } from '@/components/ui/sonner';
 
 interface Assignment {
   id: string;
@@ -24,6 +29,10 @@ interface Assignment {
 const Assignments = () => {
   const { assignments, loading } = useApp();
   const [filter, setFilter] = useState<'all' | 'pending' | 'submitted' | 'graded' | 'overdue'>('all');
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [submissionText, setSubmissionText] = useState('');
+  const [submissionFile, setSubmissionFile] = useState<any>(null);
 
   const getStatusIcon = (status: Assignment['status']) => {
     switch (status) {
@@ -94,6 +103,41 @@ const Assignments = () => {
 
   const isOverdue = (dueDate: string, status: Assignment['status']) => {
     return new Date(dueDate) < new Date() && status === 'pending';
+  };
+
+  const handleSubmitAssignment = (assignment: Assignment) => {
+    setSelectedAssignment(assignment);
+    setSubmitDialogOpen(true);
+    setSubmissionText('');
+    setSubmissionFile(null);
+  };
+
+  const handleFileUploaded = (fileData: any) => {
+    setSubmissionFile(fileData);
+  };
+
+  const submitAssignment = () => {
+    if (!selectedAssignment) return;
+    
+    if (selectedAssignment.submission_type === 'file' && !submissionFile) {
+      toast.error('Please upload a file for this assignment.');
+      return;
+    }
+    
+    if (selectedAssignment.submission_type === 'text' && !submissionText.trim()) {
+      toast.error('Please enter your submission text.');
+      return;
+    }
+    
+    if (selectedAssignment.submission_type === 'both' && !submissionFile && !submissionText.trim()) {
+      toast.error('Please provide either a file or text submission.');
+      return;
+    }
+
+    // Mock submission
+    toast.success('Assignment submitted successfully!');
+    setSubmitDialogOpen(false);
+    setSelectedAssignment(null);
   };
 
   if (loading) {
@@ -199,9 +243,55 @@ const Assignments = () => {
                   
                   <div className="flex gap-2">
                     {assignment.status === 'pending' && (
-                      <Button size="sm" className="bg-university-primary hover:bg-university-secondary">
-                        Submit Assignment
-                      </Button>
+                      <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button 
+                            size="sm" 
+                            className="bg-university-primary hover:bg-university-secondary"
+                            onClick={() => handleSubmitAssignment(assignment)}
+                          >
+                            Submit Assignment
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>Submit Assignment: {selectedAssignment?.title}</DialogTitle>
+                            <DialogDescription>
+                              Complete your assignment submission below.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            {(selectedAssignment?.submission_type === 'file' || selectedAssignment?.submission_type === 'both') && (
+                              <div>
+                                <Label>File Upload</Label>
+                                <AssignmentFileUploader onFileUploaded={handleFileUploaded} />
+                              </div>
+                            )}
+                            
+                            {(selectedAssignment?.submission_type === 'text' || selectedAssignment?.submission_type === 'both') && (
+                              <div>
+                                <Label htmlFor="submission-text">Submission Text</Label>
+                                <Textarea
+                                  id="submission-text"
+                                  value={submissionText}
+                                  onChange={(e) => setSubmissionText(e.target.value)}
+                                  placeholder="Enter your submission text here..."
+                                  className="min-h-[150px]"
+                                />
+                              </div>
+                            )}
+                            
+                            <div className="flex justify-end gap-2">
+                              <Button variant="outline" onClick={() => setSubmitDialogOpen(false)}>
+                                Cancel
+                              </Button>
+                              <Button onClick={submitAssignment}>
+                                Submit Assignment
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     )}
                     <Button variant="outline" size="sm">
                       View Details
