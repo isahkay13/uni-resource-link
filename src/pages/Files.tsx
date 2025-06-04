@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from '@/components/ui/sonner';
 import FileUploader from '../components/FileUploader';
 
 const Files = () => {
@@ -58,11 +58,30 @@ const Files = () => {
     return 'Other';
   };
 
+  const handleFileDownload = (file: any) => {
+    try {
+      // Create a temporary anchor element to trigger download
+      const link = document.createElement('a');
+      link.href = file.url;
+      link.download = file.name;
+      link.target = '_blank';
+      
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success(`Downloading ${file.name}`);
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download file. Please try again.');
+    }
+  };
+
   const handleFileUploaded = () => {
     setUploadDialogOpen(false);
   };
 
-  // Filter files based on search and type
   const filteredFiles = files.filter(file => {
     const matchesSearch = file.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          file.description?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -70,7 +89,6 @@ const Files = () => {
     return matchesSearch && matchesType;
   });
 
-  // Get unique file type categories
   const fileTypeCategories = Array.from(new Set(files.map(file => getFileTypeCategory(file.type))));
 
   if (loading) {
@@ -203,7 +221,12 @@ const Files = () => {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleFileDownload(file)}
+                  >
                     <Download className="h-3 w-3 mr-1" />
                     Download
                   </Button>
