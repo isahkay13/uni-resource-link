@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -17,6 +18,7 @@ import CreateTutorial from "./pages/CreateTutorial";
 import TutorialDetail from "./pages/TutorialDetail";
 import Files from "./pages/Files";
 import Assignments from "./pages/Assignments";
+import Settings from "./pages/Settings";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import NotFound from "./pages/NotFound";
@@ -46,6 +48,7 @@ function App() {
                     <Route path="/tutorials/:id" element={<TutorialDetail />} />
                     <Route path="/files" element={<Files />} />
                     <Route path="/assignments" element={<Assignments />} />
+                    <Route path="/settings" element={<Settings />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="*" element={<NotFound />} />

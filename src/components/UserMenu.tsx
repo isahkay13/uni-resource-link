@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from 'next-themes';
+import { useNavigate } from 'react-router-dom';
 import { 
   Settings, 
   Shield, 
@@ -29,6 +30,7 @@ import RoleBadge from './RoleBadge';
 const UserMenu = () => {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -37,11 +39,11 @@ const UserMenu = () => {
   };
 
   const handleSettings = () => {
-    toast.info('Settings page coming soon!');
+    navigate('/settings');
   };
 
   const handlePrivacy = () => {
-    toast.info('Privacy settings coming soon!');
+    navigate('/settings');
   };
 
   const handleHelp = () => {
@@ -49,11 +51,11 @@ const UserMenu = () => {
   };
 
   const handleNotifications = () => {
-    toast.info('Notification settings coming soon!');
+    navigate('/settings');
   };
 
   const handleProfile = () => {
-    toast.info('Profile page coming soon!');
+    navigate('/settings');
   };
 
   if (!user) return null;
