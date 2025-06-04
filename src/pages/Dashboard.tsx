@@ -3,10 +3,12 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
 import { Link, Navigate } from 'react-router-dom';
 import { MessageSquare, Book, File, Upload, Users, Calendar, TrendingUp, Bell, BookOpen, GraduationCap, Briefcase } from 'lucide-react';
+import FileUploader from '../components/FileUploader';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -191,11 +193,22 @@ const Dashboard = () => {
                       <BookOpen className="h-4 w-4" /> Create Tutorial
                     </Button>
                   </Link>
-                  <Link to="/files/upload">
-                    <Button variant="outline" className="w-full flex items-center justify-center gap-2">
-                      <Upload className="h-4 w-4" /> Upload Resources
-                    </Button>
-                  </Link>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+                        <Upload className="h-4 w-4" /> Upload Resources
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Upload Course Resources</DialogTitle>
+                        <DialogDescription>
+                          Upload files and resources for your students to access.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <FileUploader />
+                    </DialogContent>
+                  </Dialog>
                 </>
               )}
             </div>
@@ -314,11 +327,29 @@ const Dashboard = () => {
                     : "You haven't uploaded any files yet"
                   }
                 </p>
-                <Link to={isStudent ? "/files" : "/files/upload"}>
-                  <Button>
-                    {isStudent ? "Browse Files" : "Upload Files"}
-                  </Button>
-                </Link>
+                {isStaff ? (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Files
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Upload Course Resources</DialogTitle>
+                        <DialogDescription>
+                          Upload files and resources for your students to access.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <FileUploader />
+                    </DialogContent>
+                  </Dialog>
+                ) : (
+                  <Link to="/files">
+                    <Button>Browse Files</Button>
+                  </Link>
+                )}
               </div>
             )}
           </CardContent>

@@ -1,8 +1,9 @@
 
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Upload } from 'lucide-react';
+import { Upload, AlertCircle } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -17,6 +18,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const { uploadFile } = useApp();
   const { user } = useAuth();
 
@@ -28,6 +30,48 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const processFile = async (file: File) => {
+    if (file.size > maxSize) {
+      toast.error(`File too large. Maximum size is ${formatBytes(maxSize)}.`);
+      return;
+    }
+
+    if (!user) {
+      toast.error('You must be logged in to upload files.');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // Create a file URL for preview/download
+      const fileUrl = URL.createObjectURL(file);
+      
+      const fileAttachment = {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        url: fileUrl,
+        uploaderId: user.id,
+        uploadDate: new Date(),
+        description: `Uploaded by ${user.name}`
+      };
+
+      await uploadFile(fileAttachment);
+      
+      if (onFileUploaded) {
+        onFileUploaded(`file_${Date.now()}`);
+      }
+      
+      toast.success('File uploaded successfully.');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload file. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleUpload = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
@@ -36,65 +80,83 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    
-    if (!file) return;
-    
-    if (file.size > maxSize) {
-      toast.error(`File too large. Maximum size is ${formatBytes(maxSize)}.`);
-      return;
+    if (file) {
+      processFile(file);
     }
+  };
 
-    setUploading(true);
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragOver(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      processFile(files[0]);
+    }
+  };
 
-    // In a real app, this would upload to a server
-    setTimeout(() => {
-      // Mock file upload
-      const fileUrl = URL.createObjectURL(file);
-      
-      if (user) {
-        const fileAttachment = {
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          url: fileUrl,
-          uploaderId: user.id,
-          uploadDate: new Date()
-        };
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
 
-        uploadFile(fileAttachment);
-        
-        if (onFileUploaded) {
-          onFileUploaded(`file_${Date.now()}`);
-        }
-        
-        toast.success('File uploaded successfully.');
-      } else {
-        toast.error('You must be logged in to upload files.');
-      }
-      
-      setUploading(false);
-    }, 1500);
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragOver(false);
   };
 
   return (
-    <div className="flex flex-col items-center">
-      <input 
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        className="hidden"
-      />
-      <Button 
-        onClick={handleUpload} 
-        disabled={uploading}
-        className="flex items-center gap-2"
+    <div className="space-y-4">
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          This uploader accesses your device's file system through your browser's built-in file picker. 
+          No additional permissions are required.
+        </AlertDescription>
+      </Alert>
+
+      <div
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+          dragOver 
+            ? 'border-university-primary bg-university-primary/5' 
+            : 'border-gray-300 hover:border-gray-400'
+        }`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
       >
-        <Upload className="h-4 w-4" />
-        {uploading ? 'Uploading...' : 'Upload File'}
-      </Button>
-      <p className="text-xs text-gray-500 mt-2">
-        Maximum file size: {formatBytes(maxSize)}
-      </p>
+        <input 
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+          accept="*/*"
+        />
+        
+        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        
+        <div className="space-y-2">
+          <p className="text-lg font-medium text-gray-700">
+            {dragOver ? 'Drop file here' : 'Upload a file'}
+          </p>
+          <p className="text-sm text-gray-500">
+            Drag and drop a file here, or click to browse
+          </p>
+        </div>
+
+        <Button 
+          onClick={handleUpload} 
+          disabled={uploading}
+          className="mt-4"
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          {uploading ? 'Uploading...' : 'Choose File'}
+        </Button>
+
+        <p className="text-xs text-gray-500 mt-4">
+          Maximum file size: {formatBytes(maxSize)}
+        </p>
+      </div>
     </div>
   );
 };
