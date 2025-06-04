@@ -1,10 +1,10 @@
-
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { AppProvider } from "./context/AppContext";
+import ThemeProvider from "./components/ThemeProvider";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import Landing from "./pages/Landing";
@@ -27,33 +27,35 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <BrowserRouter>
-          <AuthProvider>
-            <AppProvider>
-              <Layout>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/landing" element={<Landing />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/channels" element={<Channels />} />
-                  <Route path="/channels/create" element={<CreateChannel />} />
-                  <Route path="/channels/:id" element={<ChannelDetail />} />
-                  <Route path="/tutorials" element={<Tutorials />} />
-                  <Route path="/tutorials/create" element={<CreateTutorial />} />
-                  <Route path="/tutorials/:id" element={<TutorialDetail />} />
-                  <Route path="/files" element={<Files />} />
-                  <Route path="/assignments" element={<Assignments />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Layout>
-            </AppProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <BrowserRouter>
+            <AuthProvider>
+              <AppProvider>
+                <Layout>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/landing" element={<Landing />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/channels" element={<Channels />} />
+                    <Route path="/channels/create" element={<CreateChannel />} />
+                    <Route path="/channels/:id" element={<ChannelDetail />} />
+                    <Route path="/tutorials" element={<Tutorials />} />
+                    <Route path="/tutorials/create" element={<CreateTutorial />} />
+                    <Route path="/tutorials/:id" element={<TutorialDetail />} />
+                    <Route path="/files" element={<Files />} />
+                    <Route path="/assignments" element={<Assignments />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Layout>
+              </AppProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
